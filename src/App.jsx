@@ -1,34 +1,47 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import Avatar from './components/Avatar'
+import ChatInterface from './components/ChatInterface'
+import ChatMessages from './components/ChatMessages'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [messages, setMessages] = useState([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const handleSendMessage = (text) => {
+    // Add user message
+    const userMessage = {
+      type: 'user',
+      text,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+
+    // Simulate psychologist response
+    setTimeout(() => {
+      setIsSpeaking(true);
+      setTimeout(() => {
+        const psychologistMessage = {
+          type: 'psychologist',
+          text: 'I understand how you feel. Would you like to tell me more about that?',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, psychologistMessage]);
+        setIsSpeaking(false);
+      }, 2000);
+    }, 1000);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="app-container">
+      <h1>Virtual Psychologist</h1>
+      <div className="main-content">
+        <Avatar speaking={isSpeaking} />
+        <ChatMessages messages={messages} />
+        <ChatInterface onSendMessage={handleSendMessage} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
 
