@@ -99,9 +99,13 @@ function App() {
     <div className="app-container">
       <h1>Virtual Psychologist</h1>
       <div className="main-content">
-        <Avatar speaking={isSpeaking} videoUrl={videoUrl} />
-        <ChatMessages messages={messages} />
-        <ChatInterface onSendMessage={handleSendMessage} />
+        <div className="video-section">
+          <Avatar speaking={isSpeaking} videoUrl={videoUrl} />
+        </div>
+        <div className="chat-section">
+          <ChatMessages messages={messages} />
+          <ChatInterface onSendMessage={handleSendMessage} />
+        </div>
       </div>
     </div>
   )
