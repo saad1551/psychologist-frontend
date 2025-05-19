@@ -10,22 +10,73 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
   const speechSynthesis = useRef(window.speechSynthesis);
+  const currentUtterance = useRef(null);
+  const speechQueue = useRef([]);
+
+  const stopSpeech = () => {
+    if (speechSynthesis.current) {
+      speechSynthesis.current.cancel();
+      speechQueue.current = [];
+      currentUtterance.current = null;
+      setIsSpeaking(false);
+    }
+  };
 
   const speakMessage = (text) => {
     if (speechSynthesis.current) {
       // Cancel any ongoing speech
-      speechSynthesis.current.cancel();
+      if (currentUtterance.current) {
+        speechSynthesis.current.cancel();
+      }
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
+      // Split text into sentences for better handling
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
       
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      // Clear any existing queue
+      speechQueue.current = [];
       
-      speechSynthesis.current.speak(utterance);
+      // Create utterances for all sentences
+      sentences.forEach((sentence, index) => {
+        const utterance = new SpeechSynthesisUtterance(sentence.trim());
+        utterance.rate = 1.1;
+        utterance.pitch = 1.2;
+        utterance.volume = 1.0;
+        
+        // Add a small pause only after certain punctuation
+        if (sentence.match(/[.!?]$/)) {
+          utterance.onend = () => {
+            if (index < sentences.length - 1) {
+              setTimeout(() => {
+                speechSynthesis.current.speak(speechQueue.current[index + 1]);
+              }, 10);
+            } else {
+              setIsSpeaking(false);
+              currentUtterance.current = null;
+            }
+          };
+        } else {
+          utterance.onend = () => {
+            if (index < sentences.length - 1) {
+              speechSynthesis.current.speak(speechQueue.current[index + 1]);
+            } else {
+              setIsSpeaking(false);
+              currentUtterance.current = null;
+            }
+          };
+        }
+        
+        utterance.onerror = (event) => {
+          console.error('Speech synthesis error:', event);
+          setIsSpeaking(false);
+        };
+        
+        speechQueue.current.push(utterance);
+      });
+      
+      // Start speaking the first sentence
+      currentUtterance.current = speechQueue.current[0];
+      speechSynthesis.current.speak(speechQueue.current[0]);
+      setIsSpeaking(true);
     }
   };
 
@@ -139,6 +190,17 @@ function App() {
       <div className="main-content">
         <div className={`video-section ${isSpeaking ? 'speaking' : ''}`}>
           <Avatar speaking={isSpeaking} videoUrl={videoUrl} />
+          {isSpeaking && (
+            <button 
+              className="stop-speech-button"
+              onClick={stopSpeech}
+              title="Stop speaking"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div className="chat-section">
           <ChatMessages messages={messages} />

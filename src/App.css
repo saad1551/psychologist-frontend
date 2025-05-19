@@ -60,6 +60,35 @@ h1 {
   box-shadow: 0 0 20px rgba(74, 144, 226, 0.3);
 }
 
+.stop-speech-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e74c3c;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.stop-speech-button:hover {
+  background: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stop-speech-button:active {
+  transform: scale(0.95);
+}
+
 .chat-section {
   display: flex;
   flex-direction: column;
