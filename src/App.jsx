@@ -3,7 +3,7 @@ import './App.css'
 import Avatar from './components/Avatar'
 import ChatInterface from './components/ChatInterface'
 import ChatMessages from './components/ChatMessages'
-import { DID_API_USERNAME, DID_API_PASSWORD } from './config'
+import { AVATAR_KEYS } from './config'
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -13,6 +13,58 @@ function App() {
   const currentUtterance = useRef(null);
   const speechQueue = useRef([]);
   const femaleVoice = useRef(null);
+  const currentKeyIndex = useRef(0);
+
+  // Parse API keys from AVATAR_KEYS
+  const apiKeys = useRef(
+    AVATAR_KEYS.split(',')
+      .map(key => key.trim())
+      .filter(key => key.includes(':'))
+      .map(key => {
+        const [username, password] = key.split(':');
+        return { username, password };
+      })
+  );
+
+  const getCurrentCredentials = () => {
+    const key = apiKeys.current[currentKeyIndex.current];
+    return btoa(`${key.username}:${key.password}`);
+  };
+
+  const rotateKey = () => {
+    currentKeyIndex.current = (currentKeyIndex.current + 1) % apiKeys.current.length;
+    console.log(`Rotating to key index: ${currentKeyIndex.current}`);
+  };
+
+  const makeRequest = async (url, options = {}) => {
+    const maxRetries = apiKeys.current.length;
+    let lastError = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const credentials = getCurrentCredentials();
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            'Authorization': `Basic ${credentials}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        lastError = error;
+        rotateKey();
+      }
+    }
+
+    throw lastError;
+  };
 
   // Initialize voice selection
   useEffect(() => {
@@ -139,13 +191,7 @@ function App() {
 
     const checkStatus = async () => {
       try {
-        const response = await fetch(`https://api.d-id.com/talks/${talkId}`, {
-          headers: {
-            'Authorization': `Basic ${btoa(`${DID_API_USERNAME}:${DID_API_PASSWORD}`)}`,
-          },
-        });
-        
-        const data = await response.json();
+        const data = await makeRequest(`https://api.d-id.com/talks/${talkId}`);
         
         if (data.status === 'done' && data.result_url) {
           setVideoUrl(data.result_url);
@@ -174,6 +220,10 @@ function App() {
     };
 
     poll();
+  };
+
+  const handleStopVideo = () => {
+    setVideoUrl(null);
   };
 
   const handleSendMessage = async (text) => {
@@ -243,18 +293,11 @@ function App() {
       <h1>Virtual Psychologist</h1>
       <div className="main-content">
         <div className={`video-section ${isSpeaking ? 'speaking' : ''}`}>
-          <Avatar speaking={isSpeaking} videoUrl={videoUrl} />
-          {isSpeaking && (
-            <button 
-              className="stop-speech-button"
-              onClick={stopSpeech}
-              title="Stop speaking"
-            >
-              <svg viewBox="0 0 24 24" width="24" height="24">
-                <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
-              </svg>
-            </button>
-          )}
+          <Avatar 
+            speaking={isSpeaking} 
+            videoUrl={videoUrl} 
+            onStopVideo={handleStopVideo}
+          />
         </div>
         <div className="chat-section">
           <ChatMessages messages={messages} />
