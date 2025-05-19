@@ -290,7 +290,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>Virtual Psychologist</h1>
+      <h1>Virtual Therapist</h1>
       <div className="main-content">
         <div className={`video-section ${isSpeaking ? 'speaking' : ''}`}>
           <Avatar 
