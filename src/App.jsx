@@ -11,7 +11,7 @@ function App() {
   const [videoUrl, setVideoUrl] = useState(null);
 
   const pollTalkStatus = async (talkId) => {
-    const maxAttempts = 30; // Maximum number of polling attempts
+    const maxAttempts = 100; // Maximum number of polling attempts
     const interval = 2000; // Poll every 2 seconds
     let attempts = 0;
 
@@ -81,10 +81,10 @@ function App() {
         pollTalkStatus(data.talk_id);
       }
 
-      // Add psychologist response
+      // Add psychologist response using the response_message from the server
       const psychologistMessage = {
         type: 'psychologist',
-        text: 'I understand how you feel. Would you like to tell me more about that?',
+        text: data.response_message || 'I understand how you feel. Would you like to tell me more about that?',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, psychologistMessage]);
