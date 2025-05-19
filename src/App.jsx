@@ -298,6 +298,17 @@ function App() {
             videoUrl={videoUrl} 
             onStopVideo={handleStopVideo}
           />
+          {isSpeaking && !videoUrl && (
+            <button 
+              className="stop-speech-button"
+              onClick={stopSpeech}
+              title="Stop speech"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div className="chat-section">
           <ChatMessages messages={messages} />
