@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import Avatar from './components/Avatar'
 import ChatInterface from './components/ChatInterface'
@@ -9,10 +9,29 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
+  const speechSynthesis = useRef(window.speechSynthesis);
+
+  const speakMessage = (text) => {
+    if (speechSynthesis.current) {
+      // Cancel any ongoing speech
+      speechSynthesis.current.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      speechSynthesis.current.speak(utterance);
+    }
+  };
 
   const pollTalkStatus = async (talkId) => {
-    const maxAttempts = 100; // Maximum number of polling attempts
-    const interval = 2000; // Poll every 2 seconds
+    const maxAttempts = 100;
+    const interval = 2000;
     let attempts = 0;
 
     const checkStatus = async () => {
@@ -89,17 +108,36 @@ function App() {
       };
       setMessages(prev => [...prev, psychologistMessage]);
       
+      // Speak the psychologist's message
+      speakMessage(psychologistMessage.text);
+      
     } catch (error) {
       console.error('Error:', error);
-      // Handle error appropriately
+      // Add a default response message in case of error
+      const errorMessage = {
+        type: 'psychologist',
+        text: 'I apologize, but I\'m having trouble processing your message right now. Could you please try again?',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      speakMessage(errorMessage.text);
     }
   };
+
+  // Cleanup speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel();
+      }
+    };
+  }, []);
 
   return (
     <div className="app-container">
       <h1>Virtual Psychologist</h1>
       <div className="main-content">
-        <div className="video-section">
+        <div className={`video-section ${isSpeaking ? 'speaking' : ''}`}>
           <Avatar speaking={isSpeaking} videoUrl={videoUrl} />
         </div>
         <div className="chat-section">
