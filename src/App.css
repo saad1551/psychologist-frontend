@@ -1,12 +1,12 @@
 #root {
   width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
 }
 
 .app-container {
-  max-width: 800px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
@@ -16,8 +16,8 @@
 
 h1 {
   color: #333;
-  margin-bottom: 2rem;
-  font-size: 2.5em;
+  margin-bottom: 1rem;
+  font-size: 2em;
 }
 
 .main-content {
@@ -27,8 +27,10 @@ h1 {
   gap: 20px;
   background-color: white;
   border-radius: 15px;
-  padding: 2rem;
+  padding: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
 }
 
 .logo {
