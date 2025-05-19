@@ -12,6 +12,53 @@ function App() {
   const speechSynthesis = useRef(window.speechSynthesis);
   const currentUtterance = useRef(null);
   const speechQueue = useRef([]);
+  const femaleVoice = useRef(null);
+
+  // Initialize voice selection
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = speechSynthesis.current.getVoices();
+      console.log(voices)
+      // Try to find a female voice, prioritizing English voices
+      const preferredVoices = [
+        'Samantha',
+        'Karen',
+        'Victoria',
+        'Microsoft Zira Desktop',
+        'Google UK English Female',
+      ];
+      
+      // First try to find one of our preferred voices
+      for (const voiceName of preferredVoices) {
+        const voice = voices.find(v => v.name === voiceName);
+        if (voice) {
+          femaleVoice.current = voice;
+          return;
+        }
+      }
+      
+      // If no preferred voice found, look for any female English voice
+      const englishFemaleVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && 
+        voice.name.toLowerCase().includes('female')
+      );
+      
+      if (englishFemaleVoice) {
+        femaleVoice.current = englishFemaleVoice;
+      }
+    };
+
+    // Chrome loads voices asynchronously
+    if (speechSynthesis.current.getVoices().length === 0) {
+      speechSynthesis.current.addEventListener('voiceschanged', loadVoices);
+    } else {
+      loadVoices();
+    }
+
+    return () => {
+      speechSynthesis.current.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
 
   const stopSpeech = () => {
     if (speechSynthesis.current) {
@@ -39,8 +86,13 @@ function App() {
       sentences.forEach((sentence, index) => {
         const utterance = new SpeechSynthesisUtterance(sentence.trim());
         utterance.rate = 1.1;
-        utterance.pitch = 1.2;
+        utterance.pitch = 1.4;
         utterance.volume = 1.0;
+        
+        // Set the female voice if available
+        if (femaleVoice.current) {
+          utterance.voice = femaleVoice.current;
+        }
         
         // Add a small pause only after certain punctuation
         if (sentence.match(/[.!?]$/)) {
@@ -159,8 +211,10 @@ function App() {
       };
       setMessages(prev => [...prev, psychologistMessage]);
       
-      // Speak the psychologist's message
-      speakMessage(psychologistMessage.text);
+      if (!data.talk_id) {
+        // Speak the psychologist's message
+        speakMessage(psychologistMessage.text);
+      }
       
     } catch (error) {
       console.error('Error:', error);
